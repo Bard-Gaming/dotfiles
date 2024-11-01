@@ -1,0 +1,31 @@
+read -p "Project name: " PROJECT_NAME
+
+# Check if project name is a valid name
+# (only alphanumerics and '_' are allowed):
+if [[ "$PROJECT_NAME" =~ [^a-zA-Z0-9\_] ]]; then
+    echo "new-project: $PROJECT_NAME: invalid project name"
+    exit
+fi
+
+# Create project dir if it doesn't exist already
+if [ ! -d $PROJECT_NAME ]; then
+    mkdir $PROJECT_NAME
+fi
+cd $PROJECT_NAME
+
+# Check for already present files to prevent
+# accidentally creating the same project twice:
+if [ -f .gitignore ]; then
+    echo "new-project: $PROJECT_NAME: project already exists"
+    exit
+fi
+
+# Create project files/dirs:
+touch .gitignore
+touch main.c
+touch Makefile
+mkdir include
+
+cat ~/.custom_scripts/default_gitignore | sed "s/\[PROJECT_NAME\]/$PROJECT_NAME/" >> .gitignore
+cat ~/.custom_scripts/default_main | sed "s/\[PROJECT_NAME\]/$PROJECT_NAME/" >> main.c
+cat ~/.custom_scripts/default_makefile | sed "s/\[PROJECT_NAME\]/$PROJECT_NAME/" >> Makefile

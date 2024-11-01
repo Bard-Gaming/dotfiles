@@ -1,0 +1,7 @@
+#!/bin/bash
+
+pkill -KILL -u chris -t tty3
+pkill -KILL -u chris -t tty4
+pkill -KILL -u chris -t tty5
+pkill -KILL -u chris -t tty6
+echo "Successfully ended all TTY sessions"
