@@ -1,6 +1,11 @@
 # Disallowed source files:
 main.c
 
+# Project local config:
+.cache/
+.dir-locals.el
+compile_commands.json
+
 # Temporary files:
 *~
 \#*\#

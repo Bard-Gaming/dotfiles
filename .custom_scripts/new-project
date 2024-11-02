@@ -1,4 +1,11 @@
+#!/bin/bash
+
+# Get project name:
 read -p "Project name: " PROJECT_NAME
+
+# Constants:
+TEMPLATE_DIR="$HOME/.custom_scripts/templates"
+INCLUDE_DIR="$(pwd)/$PROJECT_NAME/include"
 
 # Check if project name is a valid name
 # (only alphanumerics and '_' are allowed):
@@ -24,8 +31,15 @@ fi
 touch .gitignore
 touch main.c
 touch Makefile
+touch .dir-locals.el
 mkdir include
 
-cat ~/.custom_scripts/default_gitignore | sed "s/\[PROJECT_NAME\]/$PROJECT_NAME/" >> .gitignore
-cat ~/.custom_scripts/default_main | sed "s/\[PROJECT_NAME\]/$PROJECT_NAME/" >> main.c
-cat ~/.custom_scripts/default_makefile | sed "s/\[PROJECT_NAME\]/$PROJECT_NAME/" >> Makefile
+cat "$TEMPLATE_DIR/gitignore" | sed "s/\[PROJECT_NAME\]/$PROJECT_NAME/" >> .gitignore
+cat "$TEMPLATE_DIR/main" | sed "s/\[PROJECT_NAME\]/$PROJECT_NAME/" >> main.c
+cat "$TEMPLATE_DIR/makefile" | sed "s/\[PROJECT_NAME\]/$PROJECT_NAME/" >> Makefile
+cat "$TEMPLATE_DIR/dir_locals" | sed "s;\[INCLUDE_DIR\];$INCLUDE_DIR;" >> .dir-locals.el
+
+
+# Project config:
+intercept-build make -s
+make -s fclean

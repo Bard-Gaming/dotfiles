@@ -13,11 +13,13 @@ NAME = [PROJECT_NAME]
 
 SRC_FILES = main.c
 
+INCLUDE_DIR = include/
+
 
 all: $(NAME)
 
 $(NAME):
-	@$(CC) -o $(NAME) $(SRC_FILES)
+	@$(CC) -o $(NAME) $(SRC_FILES) -I./$(INCLUDE_DIR)
 
 clean:
 
