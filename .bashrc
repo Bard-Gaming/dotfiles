@@ -144,14 +144,14 @@ COLOR_GREEN="\[\033[92m\]"
 COLOR_YELLOW="\[\033[93m\]"
 
 # Shell PS1 style:
-PS1_DATE="$COLOR_RED$CALENDAR_ICON \D{%b %d}$COLOR_RESET"
-PS1_USER="$COLOR_GREEN$USER_ICON \u$COLOR_RESET"
-PS1_WDIR="$COLOR_YELLOW$FOLDER_ICON \W$COLOR_RESET"
+PS1_DATE="$COLOR_RED$CALENDAR_ICON\D{%b %d}$COLOR_RESET"
+PS1_USER="$COLOR_GREEN$USER_ICON\u$COLOR_RESET"
+PS1_WDIR="$COLOR_YELLOW$FOLDER_ICON\W$COLOR_RESET"
 PS1="$STYLE_BOLD$PS1_DATE $PS1_USER $PS1_WDIR$STYLE_RESET $ "
 
 # Preferred personal emacs config variables
 export PATH="$HOME/.config/emacs/bin:$PATH"
-alias emacs="emacsclient -q -c -a 'emacs'"
+alias emacs="emacsclient -q -nw -a ''"
 
 # Enable custom scripts
 export PATH="$HOME/.custom_scripts:$PATH"
