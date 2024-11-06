@@ -158,5 +158,6 @@ export PATH="$HOME/.custom_scripts:$PATH"
 
 # Custom aliases (mainly used to prevent others from messing with my env)
 alias sl=ls
+alias windows="xdg-open 'https://windows93.net' 2>/dev/null && :"
 alias unalias="echo \"unalias: command not found\" && :"
 alias alias="echo \"alias: command not found\" && :"
