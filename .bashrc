@@ -151,13 +151,12 @@ PS1="$STYLE_BOLD$PS1_DATE $PS1_USER $PS1_WDIR$STYLE_RESET $ "
 
 # Preferred personal emacs config variables
 export PATH="$HOME/.config/emacs/bin:$PATH"
-alias emacs="emacsclient -q -nw -a ''"
+alias emacs="emacsclient -q -nw -a 'emacs-server'"
 
 # Enable custom scripts
 export PATH="$HOME/.custom_scripts:$PATH"
 
 # Custom aliases (mainly used to prevent others from messing with my env)
 alias sl=ls
-alias windows="xdg-open 'https://windows93.net' 2>/dev/null && :"
 alias unalias="echo \"unalias: command not found\" && :"
 alias alias="echo \"alias: command not found\" && :"

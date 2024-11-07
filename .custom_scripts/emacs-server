@@ -1,0 +1,12 @@
+#!/bin/bash
+
+/bin/emacs --daemon 2>/dev/null
+
+STARTED_SERVER=$((1 - $?))
+
+if [ $STARTED_SERVER -eq 0 ]; then
+	emacsclient -e "(kill-emacs)"
+	echo "Successfully shut down emacs server"
+else
+	echo "Successfully started emacs server"
+fi
