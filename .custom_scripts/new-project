@@ -1,7 +1,21 @@
 #!/bin/bash
 
+# Interrupt handling:
+interrupt_handler() {
+    trap SIGINT  # restore default SIGINT handling
+    echo "" 1>&2
+    echo "Cancelled new project creation" 1>&2
+    exit
+}
+
+trap "interrupt_handler" SIGINT
+
 # Get project name:
-read -p "Project name: " PROJECT_NAME
+if [ $# -gt 0 ]; then
+    PROJECT_NAME="$1"
+else
+    read -r -p "Project name: " PROJECT_NAME
+fi
 
 # Constants:
 TEMPLATE_DIR="$HOME/.custom_scripts/templates"
@@ -10,20 +24,20 @@ INCLUDE_DIR="$(pwd)/$PROJECT_NAME/include"
 # Check if project name is a valid name
 # (only alphanumerics and '_' are allowed):
 if [[ "$PROJECT_NAME" =~ [^a-zA-Z0-9\_] ]]; then
-    echo "new-project: $PROJECT_NAME: invalid project name"
+    echo "new-project: $PROJECT_NAME: invalid project name" 1>&2
     exit
 fi
 
 # Create project dir if it doesn't exist already
 if [ ! -d $PROJECT_NAME ]; then
-    mkdir $PROJECT_NAME
+    mkdir "$PROJECT_NAME"
 fi
-cd $PROJECT_NAME
+cd "$PROJECT_NAME" || exit
 
 # Check for already present files to prevent
 # accidentally creating the same project twice:
 if [ -f .gitignore ]; then
-    echo "new-project: $PROJECT_NAME: project already exists"
+    echo "new-project: $PROJECT_NAME: project already exists" 1>&2
     exit
 fi
 
@@ -43,3 +57,9 @@ cat "$TEMPLATE_DIR/dir_locals" | sed "s;\[INCLUDE_DIR\];$INCLUDE_DIR;" >> .dir-l
 # Project config:
 intercept-build make -s
 make -s fclean
+
+# Success message
+echo "Successfully made project \"$PROJECT_NAME\""
+
+# Restore signal handling
+trap SIGINT
