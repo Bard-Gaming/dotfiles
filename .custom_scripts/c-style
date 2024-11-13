@@ -1,0 +1,56 @@
+#!/bin/bash
+
+STYLE_LOG="coding-style-reports.log"
+
+# ------------- utility functions -------------- :
+color-major() {
+	echo -e "\033[1;31m$1\033[0m"
+}
+
+color-minor() {
+	echo -e "\033[1;93m$1\033[0m"
+}
+
+color-info() {
+	echo -e "\033[1;37m$1\033[0m"
+}
+
+color-total() {
+	echo -e "\033[1;97m$1\033[0m"
+}
+
+color-no-err() {
+	echo -e "\033[1;32m$1\033[0m"
+}
+
+strip-ansi() {
+	echo "$1" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g"
+}
+
+# ------------ log file generation ------------- :
+echo "Loading coding-style..."
+coding-style . 1>/dev/null
+echo ""
+
+# ------------- intial error count ------------- :
+MAJOR_COUNT=$(cat "$STYLE_LOG" | grep "MAJOR" | wc -l)
+MINOR_COUNT=$(cat "$STYLE_LOG" | grep "MINOR" | wc -l)
+INFO_COUNT=$(cat "$STYLE_LOG" | grep "INFO" | wc -l)
+TOTAL_COUNT=$(($MAJOR_COUNT + $MINOR_COUNT + $INFO_COUNT))
+
+# ------------------ message ------------------- :
+
+if [ "$TOTAL_COUNT" -eq 0 ]; then
+	echo "$(color-no-err "Your project is coding-style compliant!")"
+	rm -f $STYLE_LOG
+	exit
+fi
+
+COUNT_MESSAGE="$(color-total "$TOTAL_COUNT coding style error(s)") - $(color-major "$MAJOR_COUNT major"), $(color-minor "$MINOR_COUNT minor"), $(color-info "$INFO_COUNT info")"
+MSG_CHAR_COUNT=$(($(echo $(strip-ansi "$COUNT_MESSAGE") | wc -c) - 1))
+
+echo "$COUNT_MESSAGE"
+printf -- '-%.0s' $(seq 1 $MSG_CHAR_COUNT)  # n dashes ('-'), with n being the amount of characters in COUNT_MESSAGE
+echo ""
+cat $STYLE_LOG | sed "s/MAJOR/$(color-major "MAJOR")/" | sed "s/MINOR/$(color-minor "MINOR")/" | sed "s/INFO/$(color-info "INFO")/"
+rm -f $STYLE_LOG
