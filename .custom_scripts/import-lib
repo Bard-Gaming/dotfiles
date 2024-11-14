@@ -23,11 +23,14 @@ if [ "$?" -ne "0" ]; then
 fi
 
 # --------------- Pick & choose libs --------------- :
-read -p "Library to keep: " MAKE_RULE
+read -p "Library to keep: " LIBS_TO_KEEP
 
-if [ -z "$MAKE_RULE" ]; then
+if [ -z "$LIBS_TO_KEEP" ]; then
 	echo
 	exit
 fi
 
-make -s -C "$OUTPUT_DIR" "$MAKE_RULE"
+cd "$OUTPUT_DIR"
+make -s "$LIBS_TO_KEEP" "no_repo"
+remove-scheduler
+cd - 1>/dev/null
