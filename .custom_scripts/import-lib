@@ -1,0 +1,33 @@
+#!/bin/bash
+
+GIT_SSH="git@github.com:Bard-Gaming/Epitech-Libraries.git"
+OUTPUT_DIR="lib"
+
+# -------------- Replace existing dir -------------- :
+if [ -d "$OUTPUT_DIR" ]; then
+	read -p "Replace existing \"$OUTPUT_DIR\"? (y/n) " REPLACE_DIR
+	
+	if [ "$REPLACE_DIR" = "y" ]; then
+		rm -rf "$OUTPUT_DIR"
+	else
+		exit
+	fi
+fi
+rm -rf "$OUTPUT_DIR"
+
+# ----------------- Clone lib repo ----------------- : 
+git clone "$GIT_SSH" "$OUTPUT_DIR" 2>/dev/null
+if [ "$?" -ne "0" ]; then
+	echo "Error cloning repo"
+	exit
+fi
+
+# --------------- Pick & choose libs --------------- :
+read -p "Library to keep: " MAKE_RULE
+
+if [ -z "$MAKE_RULE" ]; then
+	echo
+	exit
+fi
+
+make -s -C "$OUTPUT_DIR" "$MAKE_RULE"
