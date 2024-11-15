@@ -31,6 +31,6 @@ if [ -z "$LIBS_TO_KEEP" ]; then
 fi
 
 cd "$OUTPUT_DIR"
-make -s "$LIBS_TO_KEEP" "no_repo"
+make -s $LIBS_TO_KEEP no_repo
 remove-scheduler
 cd - 1>/dev/null
