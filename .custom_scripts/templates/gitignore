@@ -14,7 +14,9 @@ compile_commands.json
 coding-style-reports.log
 
 # Compiled/Binary files:
-a.out
-out
+*.out
+*.o
+libmy.a
+libgame.a
 [PROJECT_NAME]
 unit_tests
