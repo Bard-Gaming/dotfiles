@@ -107,9 +107,6 @@ alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo
 # You may want to put all your additions into a separate file like
 # ~/.bash_aliases, instead of adding them here directly.
 # See /usr/share/doc/bash-doc/examples in the bash-doc package.
-
-# I might want this in the future, but not needed as of now
-# (commented it out to prevent security issues)
 # if [ -f ~/.bash_aliases ]; then
 #     . ~/.bash_aliases
 # fi
@@ -129,7 +126,21 @@ fi
 # defaults are kept above this section and overwritten here
 # to allow switching back to defaults easily.
 
-# Icons (uses nerdfonts (https://www.nerdfonts.com/cheat-sheet))
+# Enable bookmarks.
+# For more information, check out
+# the .bash_bookmarks file.
+if [ -f '.bash_bookmarks' ]; then
+    source .bash_bookmarks
+fi
+
+# Enable aliases.
+# If you wish to disable them, simply
+# delete the .bash_aliases file.
+if [ -f '.bash_aliases' ]; then
+    source .bash_aliases
+fi
+
+# Icons (uses nerdfonts - https://www.nerdfonts.com/cheat-sheet):
 CALENDAR_ICON=$'\uf073 '
 USER_ICON=$'\uf007 '
 FOLDER_ICON=$'\uf07b '
@@ -149,14 +160,14 @@ PS1_USER="$COLOR_GREEN$USER_ICON\u$COLOR_RESET"
 PS1_WDIR="$COLOR_YELLOW$FOLDER_ICON\W$COLOR_RESET"
 PS1="$STYLE_BOLD$PS1_DATE $PS1_USER $PS1_WDIR$STYLE_RESET $ "
 
-# Preferred personal emacs config variables
-export PATH="$HOME/.config/emacs/bin:$PATH"
-alias emacs="emacsclient -q -nw -a 'emacs-server'"
-
 # Enable custom scripts
 export PATH="$HOME/.custom_scripts:$PATH"
 
-# Custom aliases (mainly used to prevent others from messing with my env)
-alias sl=ls
+# Emacs config
+export PATH="$HOME/.config/emacs/bin:$PATH"  # for "doom" cmd
+alias emacs="emacsclient -q -nw -a 'emacs-server'"
+
+# Prevent others changing aliases outside of config files
+# (has to happen at the end of .bashrc file)
 alias unalias="echo \"unalias: command not found\" && :"
 alias alias="echo \"alias: command not found\" && :"
