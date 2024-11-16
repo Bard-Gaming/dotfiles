@@ -1,0 +1,24 @@
+#
+# |----------------------------------------------------------|
+# |                                                          |
+# |                      BASH BOOKMARKS                      |
+# |                                                          |
+# |----------------------------------------------------------|
+#
+# This file manages bash "bookmarks". These bookmarks are
+# env variables you can "cd" into.
+#
+# Bookmarks should be named after the directory they point to.
+# For instance, the bookmark for "~/Documents/notes" should
+# be "notes". This ensures some coherence between bookmarks
+# and directories.
+#
+
+# Enable bookmarks.
+# This is done here to prevent users from accidentally
+# change into a directory they don't want to if bookmarks
+# aren't enabled.
+shopt -s cdable_vars
+
+# --------------- Directory Bookmarks --------------- :
+export lib="/home/chris/projects/epitech/personal/lib"
