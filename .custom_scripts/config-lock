@@ -3,19 +3,29 @@
 
 # ------------------- Constants ------------------- :
 CONFIG_FILE_LIST='/home/chris/.custom_scripts/.config_files'
+CONFIG_LOCK_STATE_FILE='/home/chris/.custom_scripts/.config_lock_state'
 
 # ------------------- Messages -------------------- :
 ERROR_UNEXPECTED='config-lock: Unexpected error (check script)'
-ERROR_NO_SUDO='config-lock: Config lock requires sudo permission'
-ERROR_NO_ARGS='Usage: config-lock <on/off>'
+ERROR_NO_SUDO='config-lock: on/off: Locking/Unlocking requires sudo permission'
+ERROR_NO_ARGS='Usage: config-lock <on/off/status>'
 ERROR_UNKNOWN_ARG='config-lock: Unknown argument'
 
 
 EXIT_ERROR=1
 EXIT_SUCCESS=0
 
-# ------------ Lock / Unlock functions ------------ :
+# --------------- Utility functions --------------- :
+ensure_superuser() {
+    if [ "$(id -u)" -ne 0 ]; then
+        echo "$ERROR_NO_SUDO" 1>&2
+        exit $EXIT_ERROR
+    fi
+}
+
 config_apply_attribute() {
+    ensure_superuser
+
     if [ "$#" -lt 1 ]; then
         echo "$ERROR_UNEXPECTED" 1>&2
         exit $EXIT_ERROR
@@ -27,20 +37,32 @@ config_apply_attribute() {
     done < "$CONFIG_FILE_LIST"
 }
 
+# ------------- Config lock functions ------------- :
 lock_config() {
+    touch $CONFIG_LOCK_STATE_FILE
     config_apply_attribute "+i"
+    echo 'Successfully locked config'
+    exit $EXIT_SUCCESS
 }
 
 unlock_config() {
     config_apply_attribute "-i"
+    rm -f $CONFIG_LOCK_STATE_FILE
+    echo 'Successfully unlocked config'
+    exit $EXIT_SUCCESS
+}
+
+show_config_status() {
+    if [ -f $CONFIG_LOCK_STATE_FILE ]; then
+        echo 'Config is locked'
+    else
+        echo 'Config is unlocked'
+    fi
+
+    exit $EXIT_SUCCESS
 }
 
 # ----------------- Main runtime ------------------ :
-if [ "$(id -u)" -ne 0 ]; then
-    echo "$ERROR_NO_SUDO" 1>&2
-    exit $EXIT_ERROR
-fi
-
 if [ "$#" -lt 1 ]; then
     echo "$ERROR_NO_ARGS" 1>&2
     exit $EXIT_ERROR
@@ -48,14 +70,10 @@ fi
 
 if [ "$1" = 'on' ]; then
     lock_config
-    echo 'Successfully locked config'
-    exit $EXIT_SUCCESS
-
 elif [ "$1" = 'off' ]; then
     unlock_config
-    echo 'Successfully unlocked config'
-    exit $EXIT_SUCCESS
-
+elif [ "$1" = 'status' ]; then
+    show_config_status
 fi
 
 echo "$ERROR_UNKNOWN_ARG" 1>&2
