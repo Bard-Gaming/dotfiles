@@ -1,0 +1,62 @@
+#!/bin/bash
+
+
+# ------------------- Constants ------------------- :
+CONFIG_FILE_LIST='/home/chris/.custom_scripts/.config_files'
+
+# ------------------- Messages -------------------- :
+ERROR_UNEXPECTED='config-lock: Unexpected error (check script)'
+ERROR_NO_SUDO='config-lock: Config lock requires sudo permission'
+ERROR_NO_ARGS='Usage: config-lock <on/off>'
+ERROR_UNKNOWN_ARG='config-lock: Unknown argument'
+
+
+EXIT_ERROR=1
+EXIT_SUCCESS=0
+
+# ------------ Lock / Unlock functions ------------ :
+config_apply_attribute() {
+    if [ "$#" -lt 1 ]; then
+        echo "$ERROR_UNEXPECTED" 1>&2
+        exit $EXIT_ERROR
+    fi
+
+    while IFS= read -r CUR_FILE; do
+        CUR_FILE="$(echo "$CUR_FILE" | xargs)"  # trim whitespace
+        chattr -R "$1" "$CUR_FILE"
+    done < "$CONFIG_FILE_LIST"
+}
+
+lock_config() {
+    config_apply_attribute "+i"
+}
+
+unlock_config() {
+    config_apply_attribute "-i"
+}
+
+# ----------------- Main runtime ------------------ :
+if [ "$(id -u)" -ne 0 ]; then
+    echo "$ERROR_NO_SUDO" 1>&2
+    exit $EXIT_ERROR
+fi
+
+if [ "$#" -lt 1 ]; then
+    echo "$ERROR_NO_ARGS" 1>&2
+    exit $EXIT_ERROR
+fi
+
+if [ "$1" = 'on' ]; then
+    lock_config
+    echo 'Successfully locked config'
+    exit $EXIT_SUCCESS
+
+elif [ "$1" = 'off' ]; then
+    unlock_config
+    echo 'Successfully unlocked config'
+    exit $EXIT_SUCCESS
+
+fi
+
+echo "$ERROR_UNKNOWN_ARG" 1>&2
+exit $EXIT_ERROR
