@@ -10,8 +10,8 @@
 #
 # Bookmarks should be named after the directory they point to.
 # For instance, the bookmark for "~/Documents/notes" should
-# be "notes". This ensures some coherence between bookmarks
-# and directories.
+# be "notes" or a similar enough derivative of "notes".
+# This ensures some coherence between bookmarks and directories.
 #
 
 # Enable bookmarks.
@@ -20,5 +20,10 @@
 # aren't enabled.
 shopt -s cdable_vars
 
-# --------------- Directory Bookmarks --------------- :
+# --------------------- Modules --------------------- :
+export psu="/home/chris/projects/epitech/unix_system_programming"
+export math="/home/chris/projects/epitech/mathematics"
+export piscine="/home/chris/projects/epitech/piscine"
+
+# ------------------ Commonly used ------------------ :
 export lib="/home/chris/projects/epitech/personal/lib"
