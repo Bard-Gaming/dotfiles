@@ -1,0 +1,74 @@
+#!/bin/bash
+
+# ------------------- Constants ------------------- :
+PROJECT_FILE_LIST_FILE=".project_keep"
+
+# -------------------- Errors --------------------- :
+EXIT_SUCCESS=0
+EXIT_ERROR=1
+
+err_insufficient_args() {
+    echo -e "Usage:\tproject-utils remove-unwanted" 1>&2
+    echo "Try 'project-utils help' for more information." 1>&2
+    exit $EXIT_ERROR
+}
+
+err_unknown_arg() {
+    echo "project-utils: $*: Unknown argument(s)" 1>&2
+    exit $EXIT_ERROR
+}
+
+# --------------- Utility Functions --------------- :
+trim_whitespace() {
+    echo "$1" | xargs
+}
+
+file_ends_in_newline() {
+    tail -c 1 "$1" | wc -l
+}
+
+ensure_file_exists() {
+    if ! [ -f "$1" ]; then
+        echo "project-utils: $1: No such file or directory" 1>&2
+        exit 1
+    fi
+}
+
+# ------------- Remove Unwanted Files ------------- :
+is_project_file() {
+    FILE="$(trim_whitespace "$1")"
+
+    while IFS= read -r LINE; do
+        PROJECT_FILE="$(trim_whitespace "$LINE")"
+        if [ "$FILE" = "$PROJECT_FILE" ]; then
+            echo 'true'
+        fi
+    done < $PROJECT_FILE_LIST_FILE
+    echo 'false'
+}
+
+remove_unwanted_files() {
+    ensure_file_exists "$PROJECT_FILE_LIST_FILE"
+    if [ "$(file_ends_in_newline $PROJECT_FILE_LIST_FILE)" -eq 0 ]; then
+        echo "" >> $PROJECT_FILE_LIST_FILE
+    fi
+
+    # Recursively delete everything that isn't in project keep file
+    for FILE in $(ls -1A); do
+        if [ "$FILE" != "$PROJECT_FILE_LIST_FILE" ] && [ "$(is_project_file "$FILE")" = "false" ]; then
+            rm -rf "./$FILE"
+        fi
+    done
+}
+
+# ----------------- Main process ------------------ :
+if [ "$#" -lt 1 ]; then
+    err_insufficient_args
+fi
+
+if [ "$1" = "remove-unwanted" ]; then
+    remove_unwanted_files
+    exit $EXIT_SUCCESS
+else
+    err_unknown_arg "$@"
+fi
