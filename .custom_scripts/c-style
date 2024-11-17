@@ -27,16 +27,23 @@ strip-ansi() {
 	echo "$1" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g"
 }
 
+# ------------- clean up project --------------- :
+if [ -f "Makefile" ]; then
+	if make fclean 1>/dev/null 2>/dev/null; then
+		echo "Cleaned up project!"
+	fi
+fi
+
 # ------------ log file generation ------------- :
 echo "Loading coding-style..."
 coding-style . 1>/dev/null
 echo ""
 
 # ------------- intial error count ------------- :
-MAJOR_COUNT=$(cat "$STYLE_LOG" | grep "MAJOR" | wc -l)
-MINOR_COUNT=$(cat "$STYLE_LOG" | grep "MINOR" | wc -l)
-INFO_COUNT=$(cat "$STYLE_LOG" | grep "INFO" | wc -l)
-TOTAL_COUNT=$(($MAJOR_COUNT + $MINOR_COUNT + $INFO_COUNT))
+MAJOR_COUNT=$(cat "$STYLE_LOG" | grep -c "MAJOR")
+MINOR_COUNT=$(cat "$STYLE_LOG" | grep -c "MINOR")
+INFO_COUNT=$(cat "$STYLE_LOG" | grep -c "INFO")
+TOTAL_COUNT=$((MAJOR_COUNT + MINOR_COUNT + INFO_COUNT))
 
 # ------------------ message ------------------- :
 
