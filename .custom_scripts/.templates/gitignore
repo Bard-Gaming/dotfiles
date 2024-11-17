@@ -4,6 +4,7 @@ main.c
 # Project local config:
 .cache/
 .dir-locals.el
+.project_keep
 compile_commands.json
 
 # Temporary files:
