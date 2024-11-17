@@ -10,9 +10,16 @@ interrupt_handler() {
 
 trap "interrupt_handler" SIGINT
 
+str_is_option() {
+    local first_char
+    first_char=$(printf %.1s "$1")
+    [ "$first_char" = "-" ]
+    echo "$?"
+}
+
 # Get project name:
-if [ $# -gt 0 ]; then
-    PROJECT_NAME="$1"
+if [ "$#" -gt 0 ] && [ "$(str_is_option "${@: -1}")" -eq 1 ]; then
+    PROJECT_NAME="${@: -1}"
 else
     read -r -p "Project name: " PROJECT_NAME
 fi
@@ -46,12 +53,14 @@ touch .gitignore
 touch main.c
 touch Makefile
 touch .dir-locals.el
+touch README.md
 mkdir include
 
 cat "$TEMPLATE_DIR/gitignore" | sed "s/\[PROJECT_NAME\]/$PROJECT_NAME/" >> .gitignore
 cat "$TEMPLATE_DIR/main" | sed "s/\[PROJECT_NAME\]/$PROJECT_NAME/" >> main.c
 cat "$TEMPLATE_DIR/makefile" | sed "s/\[PROJECT_NAME\]/$PROJECT_NAME/" >> Makefile
 cat "$TEMPLATE_DIR/dir_locals" | sed "s;\[INCLUDE_DIR\];$INCLUDE_DIR;" >> .dir-locals.el
+cat "$TEMPLATE_DIR/readme" | sed "s/\[PROJECT_NAME\]/$PROJECT_NAME/" >> README.md
 
 
 # Project config:

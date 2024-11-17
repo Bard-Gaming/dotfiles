@@ -1,0 +1,21 @@
+# [PROJECT_NAME]
+
+## Project Decription
+
+## Compilation
+To compile the standard version of [PROJECT_NAME],
+simply run make:
+
+```bash
+make
+```
+
+To compile a version with debug symbols enabled,
+use the ``debug`` rule:
+
+```bash
+make debug
+```
+
+When you're done, you can use the ``clean`` or
+``fclean`` rules to clean up the project.
