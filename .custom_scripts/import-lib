@@ -2,6 +2,7 @@
 
 GIT_SSH="git@github.com:Bard-Gaming/Epitech-Libraries.git"
 OUTPUT_DIR="lib"
+PROJECT_CONF_FILE=".project_keep"
 
 # -------------- Replace existing dir -------------- :
 if [ -d "$OUTPUT_DIR" ]; then
@@ -18,19 +19,20 @@ rm -rf "$OUTPUT_DIR"
 # ----------------- Clone lib repo ----------------- : 
 git clone "$GIT_SSH" "$OUTPUT_DIR" 2>/dev/null
 if [ "$?" -ne "0" ]; then
-	echo "Error cloning repo"
+	echo "import-lib: Error cloning library repo"
 	exit
 fi
 
 # --------------- Pick & choose libs --------------- :
-read -p "Library to keep: " LIBS_TO_KEEP
+read -r -p "Libraries to keep: " LIBS_TO_KEEP
 
 if [ -z "$LIBS_TO_KEEP" ]; then
-	echo
+	echo ""
 	exit
 fi
 
-cd "$OUTPUT_DIR"
-make -s $LIBS_TO_KEEP no_repo
-remove-scheduler
+cd "$OUTPUT_DIR"  # cd can't fail here
+make -s $LIBS_TO_KEEP no_repo  # keep LIBS_TO_KEEP unquoted since we want word splitting here
+project-utils remove-unwanted
+rm -f "$PROJECT_CONF_FILE"
 cd - 1>/dev/null
