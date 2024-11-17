@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Constants:
+TEMPLATE_DIR="/home/chris/.custom_scripts/.templates"
+INCLUDE_DIR="$(pwd)/$PROJECT_NAME/include"
+
 # Interrupt handling:
 interrupt_handler() {
     trap SIGINT  # restore default SIGINT handling
@@ -23,10 +27,6 @@ if [ "$#" -gt 0 ] && [ "$(str_is_option "${@: -1}")" -eq 1 ]; then
 else
     read -r -p "Project name: " PROJECT_NAME
 fi
-
-# Constants:
-TEMPLATE_DIR="$HOME/.custom_scripts/templates"
-INCLUDE_DIR="$(pwd)/$PROJECT_NAME/include"
 
 # Check if project name is a valid name
 # (only alphanumerics and '_' are allowed):
