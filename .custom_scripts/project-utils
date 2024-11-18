@@ -8,7 +8,7 @@ EXIT_SUCCESS=0
 EXIT_ERROR=1
 
 err_insufficient_args() {
-    echo -e "Usage:\tproject-utils remove-unwanted" 1>&2
+    echo "Usage: project-utils COMMAND" 1>&2
     echo "Try 'project-utils help' for more information." 1>&2
     exit $EXIT_ERROR
 }
@@ -16,6 +16,16 @@ err_insufficient_args() {
 err_unknown_arg() {
     echo "project-utils: $*: Unknown argument(s)" 1>&2
     exit $EXIT_ERROR
+}
+
+# ------------------ Help Dialog ------------------ :
+display_help() {
+    echo "Usage: project-utils COMMAND"
+    echo "Automate various tasks related to projects"
+    echo ""
+    echo "Commands:"
+    echo -e "  remove-unwanted\t delete all project files that aren't in $PROJECT_FILE_LIST_FILE"
+    echo -e "  help\t\t\t display this message!"
 }
 
 # --------------- Utility Functions --------------- :
@@ -68,6 +78,9 @@ fi
 
 if [ "$1" = "remove-unwanted" ]; then
     remove_unwanted_files
+    exit $EXIT_SUCCESS
+elif [ "$1" = "help" ]; then
+    display_help
     exit $EXIT_SUCCESS
 else
     err_unknown_arg "$@"
