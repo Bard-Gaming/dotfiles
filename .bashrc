@@ -114,13 +114,13 @@ alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo
 # enable programmable completion features (you don't need to enable
 # this, if it's already enabled in /etc/bash.bashrc and /etc/profile
 # sources /etc/bash.bashrc).
-if ! shopt -oq posix; then
-  if [ -f /usr/share/bash-completion/bash_completion ]; then
-    . /usr/share/bash-completion/bash_completion
-  elif [ -f /etc/bash_completion ]; then
-    . /etc/bash_completion
-  fi
-fi
+# if ! shopt -oq posix; then
+#   if [ -f /usr/share/bash-completion/bash_completion ]; then
+#     . /usr/share/bash-completion/bash_completion
+#   elif [ -f /etc/bash_completion ]; then
+#     . /etc/bash_completion
+#   fi
+# fi
 
 # ---------------- Personal Configuration ---------------- :
 # defaults are kept above this section and overwritten here
@@ -138,6 +138,13 @@ fi
 # delete the .bash_aliases file.
 if [ -f '.bash_aliases' ]; then
     source .bash_aliases
+fi
+
+# Enable bash completion.
+# This is done explicitely
+# so cdable_vars are autocompleted
+if [ -f '/etc/bash_completion' ]; then
+    source /etc/bash_completion
 fi
 
 # Icons (uses nerdfonts - https://www.nerdfonts.com/cheat-sheet):
