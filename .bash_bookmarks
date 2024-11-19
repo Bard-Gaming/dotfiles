@@ -24,6 +24,12 @@ shopt -s cdable_vars
 export psu="/home/chris/projects/epitech/unix_system_programming"
 export math="/home/chris/projects/epitech/mathematics"
 export piscine="/home/chris/projects/epitech/piscine"
+export graphical="/home/chris/projects/epitech/graphical"
 
 # ------------------ Commonly used ------------------ :
 export lib="/home/chris/projects/epitech/personal/lib"
+
+# ----------------- Ongoing Projects ---------------- :
+export hunter="$graphical/my_hunter"
+export setting_up="$piscine/setting_up"
+export architect="$math/102architect"
