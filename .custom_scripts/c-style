@@ -24,13 +24,24 @@ color-no-err() {
 }
 
 strip-ansi() {
+	# Black magic sed to remove ansi escape sequences from a string
+	# (Copied over from a Stackoverflow post somewhere)
 	echo "$1" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g"
+}
+
+get_project_name() {
+	# This function depends on a Makefile being present
+	# and the NAME variable being defined in it
+	cat "Makefile" | grep "=" | grep "NAME" | cut -d= -f2 | xargs
 }
 
 # ------------- clean up project --------------- :
 if [ -f "Makefile" ]; then
-	if make fclean 1>/dev/null 2>/dev/null; then
-		echo "Cleaned up project!"
+	EXECUTABLE_NAME="$(get_project_name)"
+	if [ -f "$EXECUTABLE_NAME" ]; then
+		if make fclean 1>/dev/null 2>/dev/null; then
+			echo "Cleaned up project '$EXECUTABLE_NAME'!"
+		fi
 	fi
 fi
 
