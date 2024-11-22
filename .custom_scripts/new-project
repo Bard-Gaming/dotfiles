@@ -55,6 +55,7 @@ touch Makefile
 touch .dir-locals.el
 touch README.md
 mkdir include
+mkdir tests
 
 cat "$TEMPLATE_DIR/gitignore" | sed "s/\[PROJECT_NAME\]/$PROJECT_NAME/" >> .gitignore
 cat "$TEMPLATE_DIR/main" | sed "s/\[PROJECT_NAME\]/$PROJECT_NAME/" >> main.c

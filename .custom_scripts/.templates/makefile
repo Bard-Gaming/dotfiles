@@ -13,7 +13,11 @@ CFLAGS =
 
 NAME = [PROJECT_NAME]
 
-SRC_FILES = main.c
+TEST_NAME = unit_tests
+
+SRC_FILES = main.c								\
+
+TST_FILES = $(filter-out main.c, $(SRC_FILES))	\
 
 INCLUDE_DIR = include/
 
@@ -26,9 +30,22 @@ $(NAME):
 debug: CFLAGS = -ggdb -Wall -Wextra
 debug: fclean $(NAME)
 
+tests_run:
+	@$(CC) -o $(TEST_NAME) $(TST_FILES) -I./$(INCLUDE_DIR)	\
+	--coverage -lcriterion
+	@./$(TEST_NAME)
+	@rm -f $(TEST_NAME)
+
+test_coverage: tests_run
+	@gcovr --exclude tests/
+	@gcovr --exclude tests/ --txt-metric=branch
+
 clean:
+	@rm -f *.gcno
+	@rm -f *.gcda
 
 fclean: clean
+	@rm -f $(TEST_NAME)
 	@rm -f $(NAME)
 
 re: fclean all
