@@ -2,7 +2,7 @@
 
 ## Project Decription
 
-## Compilation
+## Compile Instructions
 To compile the standard version of [PROJECT_NAME],
 simply run make:
 
@@ -17,5 +17,12 @@ use the ``debug`` rule:
 make debug
 ```
 
-When you're done, you can use the ``clean`` or
-``fclean`` rules to clean up the project.
+Unit tests can be run using the ``tests_run`` rule:
+
+```bash
+make tests_run
+```
+
+When you're done, you can use the ``clean`` rule
+to delete any temporary files, or the ``fclean``
+rule to delete everything but the source code.
