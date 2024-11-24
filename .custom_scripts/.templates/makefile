@@ -8,26 +8,25 @@
 ##
 
 CC = gcc
-
 CFLAGS =
 
 NAME = [PROJECT_NAME]
-
 TEST_NAME = unit_tests
+
+INCLUDE_DIR = include/
 
 SRC_FILES = main.c								\
 
 TST_FILES = $(filter-out main.c, $(SRC_FILES))	\
 
-INCLUDE_DIR = include/
-
+.PHONY = all debug tests_run test_coverage clean fclean re
 
 all: $(NAME)
 
 $(NAME):
 	@$(CC) -o $(NAME) $(CFLAGS) $(SRC_FILES) -I./$(INCLUDE_DIR)
 
-debug: CFLAGS = -ggdb -Wall -Wextra
+debug: CFLAGS += -ggdb -Wall -Wextra
 debug: fclean $(NAME)
 
 tests_run:
