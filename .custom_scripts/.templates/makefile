@@ -29,13 +29,15 @@ $(NAME):
 debug: CFLAGS += -ggdb -Wall -Wextra
 debug: fclean $(NAME)
 
-tests_run:
-	@$(CC) -o $(TEST_NAME) $(TST_FILES) -I./$(INCLUDE_DIR)	\
-	--coverage -lcriterion
+$(TEST_NAME): CFLAGS += -o $(TEST_NAME) --coverage -lcriterion
+$(TEST_NAME): SRC_FILES := $(TST_FILES)
+$(TEST_NAME): $(NAME)
+
+tests_run: $(TEST_NAME)
 	@./$(TEST_NAME)
 	@rm -f $(TEST_NAME)
 
-test_coverage: tests_run
+test_coverage: $(TEST_NAME)
 	@gcovr --exclude tests/
 	@gcovr --exclude tests/ --txt-metric=branch
 
