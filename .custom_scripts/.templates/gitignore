@@ -19,5 +19,6 @@ coding-style-reports.log
 *.o
 libmy.a
 libgame.a
+libdata_types.a
 [PROJECT_NAME]
 unit_tests
