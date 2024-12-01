@@ -31,6 +31,6 @@ export graphical="/home/chris/projects/epitech/graphical"
 export lib="/home/chris/projects/epitech/personal/lib"
 
 # ----------------- Ongoing Projects ---------------- :
-export hunter="$graphical/my_hunter"
+export my_hunter="$graphical/my_hunter"
 export organized="$pce/organized"
-export architect="$math/102architect"
+export my_top="$psu/my_top"
