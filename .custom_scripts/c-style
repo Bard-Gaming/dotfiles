@@ -32,7 +32,7 @@ strip-ansi() {
 get_project_name() {
 	# This function depends on a Makefile being present
 	# and the NAME variable being defined in it
-	cat "Makefile" | grep "=" | grep "NAME" | cut -d= -f2 | xargs
+	cat "Makefile" | grep -F "=" | grep -F "NAME" | head -n1 | cut -d= -f2 | xargs
 }
 
 # ------------- clean up project --------------- :
