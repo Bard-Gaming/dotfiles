@@ -1,0 +1,39 @@
+#!/bin/bash
+
+
+# ------------------- Constants ------------------- :
+EXIT_SUCCESS=0
+EXIT_ERR=84
+
+# -------------------- Messages ------------------- :
+USAGE_MSG="Usage: limit-memory <MEMORY> <COMMAND>"
+ARG_ERR_MSG="limit-memory: Not enough arguments"
+
+NAN_MSG() {
+    echo "limit-memory: $1: Not a number"
+}
+
+# --------------------- Utils --------------------- :
+ensure_number() {
+    if ! [[ "$1" =~ ^[0-9]+$ ]]; then
+        NAN_MSG "$1" 1>&2
+        exit $EXIT_ERR
+    fi
+}
+
+# ---------------- Program runtime ---------------- :
+if [ "$#" -eq 0 ]; then
+    echo "$USAGE_MSG" 1>&2
+    exit $EXIT_ERR
+elif [ "$#" -lt 2 ]; then
+    echo "$ARG_ERR_MSG" 1>&2
+    exit $EXIT_ERR
+fi
+
+ensure_number "$1"
+
+ulimit -v "$1"
+"${@: 2}"
+
+
+exit $EXIT_SUCCESS
