@@ -19,6 +19,8 @@ Usage:
 Get a list of all GNU C Library functions used in given binary files.
 
 Options:
+ -a, --almost-all      get all external functions.
+ -A, --all             get all functions.
  -c, --columns         get the list in columns instead of rows.
  -d, --no-duplicates   if -H, only get unique function names, otherwise only unique binaries
  -F, --force-headers   force display of binary file names (for when there's only a single binary)
@@ -28,8 +30,70 @@ Options:
 EOM
 }
 
-get_function_names() {
-    nm -j "$1" | grep "@GLIBC" | grep -v "__" | cut -d"@" -f1
+get_detailed_function_list() {
+    nm "$1" | sed -E 's/ +/ /' | grep -v "__" | grep -v " _"
+}
+
+mark_owned() {
+    # This function only exists due to syntax issues
+    sed -E 's/( T )|( t )/ t $/'
+}
+
+get_function_list() {
+    local FUNCTION_LIST
+
+    case "$LIST" in
+        glibc)
+            nm -j "$1" | grep "@GLIBC" | grep -v "__" | cut -d"@" -f1
+            return 0
+            ;;
+        almost-all)
+            FUNCTION_LIST=$(get_detailed_function_list "$1" | grep -v " T " | grep -v " t " | cut -d" " -f3)
+            color_functions $FUNCTION_LIST
+            return 0
+            ;;
+        all)
+            FUNCTION_LIST=$(get_detailed_function_list "$1" | mark_owned | cut -d" " -f3)
+            color_functions $FUNCTION_LIST
+            return 0
+            ;;
+    esac
+    return 1
+}
+
+glibc_color() {
+    echo $'\033[38;5;27;1m'"$1"$'\033[0m'
+}
+
+sfml_color() {
+    echo $'\033[38;5;76;1m'"$1"$'\033[0m'
+}
+
+owned_color() {
+    echo $'\033[38;5;220;1m'"$1"$'\033[0m'
+}
+
+color_functions() {
+    for FUNCTION_NAME in "$@"; do
+        printf "%s; " "$FUNCTION_NAME" >> debug
+
+        if [[ $FUNCTION_NAME =~ @GLIBC ]]; then
+            glibc_color "$(echo "$FUNCTION_NAME" | cut -d"@" -f1)"
+            continue
+        fi
+
+        if [[ $FUNCTION_NAME =~ ^sf[A-Z] ]]; then
+            sfml_color "$FUNCTION_NAME"
+            continue
+        fi
+
+        if [[ $FUNCTION_NAME =~ ^\$ ]]; then
+            owned_color "${FUNCTION_NAME:1}"
+            continue
+        fi
+
+        echo "$FUNCTION_NAME"
+    done
 }
 
 
@@ -44,9 +108,18 @@ DISPLAY_COLUMNS=0
 DISPLAY_HEADERS=1
 FORCE_HEADERS=0
 NO_DUPLICATES=0
+LIST="glibc"
 
 while [ "$#" -gt 0 ]; do
     case "$1" in
+        -a | --almost-all)
+            LIST="almost-all"
+            shift
+            ;;
+        -A | --all)
+            LIST="all"
+            shift
+            ;;
         -c | --columns)
             DISPLAY_COLUMNS=1
             shift
@@ -109,7 +182,7 @@ for BINARY in $BINARIES_STR; do
         exit 1
     fi
 
-    OUTPUT="$(get_function_names "$BINARY")"
+    OUTPUT="$(get_function_list "$BINARY")"
 
     if [ $DISPLAY_COLUMNS -eq 1 ]; then
         OUTPUT=$(echo "$OUTPUT" | column)
