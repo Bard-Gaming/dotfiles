@@ -1,0 +1,133 @@
+#!/bin/bash
+
+
+SCRIPT_NAME=$(basename "$0")
+
+
+#########################################################
+##                                                     ##
+##                        Utils                        ##
+##                                                     ##
+#########################################################
+
+display_help() {
+    cat <<-EOM
+
+Usage:
+ $SCRIPT_NAME [options] <binary> [binary, ...]
+
+Get a list of all GNU C Library functions used in given binary files.
+
+Options:
+ -c, --columns         get the list in columns instead of rows.
+ -d, --no-duplicates   if -H, only get unique function names, otherwise only unique binaries
+ -F, --force-headers   force display of binary file names (for when there's only a single binary)
+ -h, --help            display this message and exit.
+ -H, --no-headers      don't display binary file names. (default if single binary is specified)
+
+EOM
+}
+
+get_function_names() {
+    nm -j "$1" | grep "@GLIBC" | grep -v "__" | cut -d"@" -f1
+}
+
+
+#########################################################
+##                                                     ##
+##                       Parsing                       ##
+##                                                     ##
+#########################################################
+
+BINARIES=()
+DISPLAY_COLUMNS=0
+DISPLAY_HEADERS=1
+FORCE_HEADERS=0
+NO_DUPLICATES=0
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        -c | --columns)
+            DISPLAY_COLUMNS=1
+            shift
+            ;;
+        -d | --no-duplicates)
+            NO_DUPLICATES=1
+            shift
+            ;;
+        -F | --force-headers)
+            FORCE_HEADERS=1
+            shift
+            ;;
+        -h | --help)
+            display_help
+            exit 0
+            ;;
+        -H | --no-headers)
+            DISPLAY_HEADERS=0
+            shift
+            ;;
+        -*)
+            echo "$SCRIPT_NAME: Error: Unknown option '$1'" 1>&2
+            exit 1
+            ;;
+        *)
+            BINARIES+=("$1")
+            shift
+            ;;
+    esac
+done
+
+BINARY_COUNT="${#BINARIES[@]}"
+
+if [ "$BINARY_COUNT" -eq 0 ]; then
+    echo "$SCRIPT_NAME: Error: At least one binary file is required" 1>&2
+    exit 1
+elif [ "$BINARY_COUNT" -eq 1 ] && [ $DISPLAY_HEADERS -eq 1 ] && [ $FORCE_HEADERS -eq 0 ]; then
+    DISPLAY_HEADERS=0  # don't display headers if only a single binary is present
+fi
+
+
+#########################################################
+##                                                     ##
+##                    Program Logic                    ##
+##                                                     ##
+#########################################################
+
+FULL_OUTPUT=""
+NEWLINE=$'\n'
+
+if [ $NO_DUPLICATES -eq 1 ] && [ $DISPLAY_HEADERS -eq 1 ]; then
+    BINARIES_STR="$(printf '%s\n' "${BINARIES[@]}" | sort -u)"
+else
+    BINARIES_STR="${BINARIES[*]}"
+fi
+
+for BINARY in $BINARIES_STR; do
+    if ! [ -f "$BINARY" ] || ! [ -r "$BINARY" ]; then
+        echo "$SCRIPT_NAME: Error: Couldn't read file '$BINARY'" 1>&2
+        exit 1
+    fi
+
+    OUTPUT="$(get_function_names "$BINARY")"
+
+    if [ $DISPLAY_COLUMNS -eq 1 ]; then
+        OUTPUT=$(echo "$OUTPUT" | column)
+    fi
+
+    if [ $DISPLAY_HEADERS -eq 1 ]; then
+        OUTPUT=$(echo "$OUTPUT" | sed -e "s/^/  /")
+        OUTPUT="$BINARY:$NEWLINE$OUTPUT$NEWLINE"
+    fi
+
+    FULL_OUTPUT="$FULL_OUTPUT$OUTPUT$NEWLINE"
+done
+
+if [ $DISPLAY_HEADERS -eq 0 ] && [ $NO_DUPLICATES -eq 1 ]; then
+    FULL_OUTPUT=$(printf "%s" "$FULL_OUTPUT" | sort -u -i)
+    FULL_OUTPUT="$FULL_OUTPUT$NEWLINE"
+fi
+
+printf "%s" "$FULL_OUTPUT"
+
+exit 0
