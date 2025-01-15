@@ -32,5 +32,3 @@ export lib="/home/chris/projects/epitech/personal/lib"
 export emsee="/home/chris/projects/epitech/personal/emsee-gui"
 
 # ----------------- Ongoing Projects ---------------- :
-export my_radar="$graphical/my_radar"
-export neutrinos="$math/104neutrinos"
