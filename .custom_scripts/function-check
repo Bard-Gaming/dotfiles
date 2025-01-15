@@ -75,8 +75,6 @@ owned_color() {
 
 color_functions() {
     for FUNCTION_NAME in "$@"; do
-        printf "%s; " "$FUNCTION_NAME"
-
         if [[ $FUNCTION_NAME =~ @GLIBC ]]; then
             glibc_color "$(echo "$FUNCTION_NAME" | cut -d"@" -f1)"
             continue
