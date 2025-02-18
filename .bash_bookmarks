@@ -22,7 +22,7 @@ shopt -s cdable_vars
 
 # --------------------- Modules --------------------- :
 export psu="/home/chris/projects/epitech/unix_system_programming"
-export pce="/home/chris/projects/epitech/elementary_programming_c"
+export cpe="/home/chris/projects/epitech/elementary_programming_c"
 export math="/home/chris/projects/epitech/mathematics"
 export piscine="/home/chris/projects/epitech/piscine"
 export graphical="/home/chris/projects/epitech/graphical"
@@ -30,5 +30,9 @@ export graphical="/home/chris/projects/epitech/graphical"
 # ------------------ Commonly used ------------------ :
 export lib="/home/chris/projects/epitech/personal/lib"
 export emsee="/home/chris/projects/epitech/personal/emsee-gui"
+export bardedit="/home/chris/projects/epitech/personal/bardedit"
+export mysh="/home/chris/projects/epitech/personal/42sh"
 
 # ----------------- Ongoing Projects ---------------- :
+export my_sudo="$psu/my_sudo"
+export robot="$cpe/robot_factory"
