@@ -1,27 +1,21 @@
 #!/bin/bash
 
-STYLE_LOG="coding-style-reports.log"
 
-# ------------- utility functions -------------- :
-color-major() {
-	echo -e "\033[1;31m$1\033[0m"
-}
+# Constants:
+USER_DIR=$(pwd)
+CODING_STYLE_LOG_FILE="$USER_DIR/coding-style-reports.log"
 
-color-minor() {
-	echo -e "\033[1;93m$1\033[0m"
-}
+EXIT_NO_ERRORS=0
+EXIT_ERRORS=1
+EXIT_USER_ERROR=2
 
-color-info() {
-	echo -e "\033[1;37m$1\033[0m"
-}
-
-color-total() {
-	echo -e "\033[1;97m$1\033[0m"
-}
-
-color-no-err() {
-	echo -e "\033[1;32m$1\033[0m"
-}
+# ------------- Colors -------------- :
+COLOR_MAJOR=$'\033[1;31m'
+COLOR_MINOR=$'\033[1;93m'
+COLOR_INFO=$'\033[1;37m'
+COLOR_TOTAL=$'\033[1;97m'
+COLOR_NO_ERR=$'\033[1;32m'
+COLOR_RESET=$'\033[0m'
 
 strip-ansi() {
 	# Black magic sed to remove ansi escape sequences from a string
@@ -32,7 +26,32 @@ strip-ansi() {
 get_project_name() {
 	# This function depends on a Makefile being present
 	# and the NAME variable being defined in it
-	cat "Makefile" | grep -F "=" | grep -F "NAME" | head -n1 | cut -d= -f2 | xargs
+	grep -F "=" < Makefile | grep -F "NAME" | head -n1 | cut -d= -f2 | xargs
+}
+
+load_coding_style() {
+	docker run --rm --security-opt "label:disable" -i -v ".":"/mnt/delivery" -v ".":"/mnt/reports" ghcr.io/epitech/coding-style-checker:latest "/mnt/delivery" "/mnt/reports"
+}
+
+count_errors() {
+	grep -c "$1" < "$CODING_STYLE_LOG_FILE"
+}
+
+print_color() {
+	printf "%s%s%s\n" "$1" "$2" "$COLOR_RESET"
+}
+
+display_errors() {
+	sed "s/MAJOR/$(print_color "$COLOR_MAJOR" "MAJOR")/" < "$CODING_STYLE_LOG_FILE" | \
+	sed "s/MINOR/$(print_color "$COLOR_MINOR" "MINOR")/" | \
+	sed "s/INFO/$(print_color "$COLOR_INFO" "INFO")/"
+}
+
+count_chars_ansiless() {
+	local ANSILESS_MSG
+
+	ANSILESS_MSG=$(strip-ansi "$1")
+	echo "${#ANSILESS_MSG}"
 }
 
 # ------------- clean up project --------------- :
@@ -47,28 +66,38 @@ fi
 
 # ------------ log file generation ------------- :
 echo "Loading coding-style..."
-coding-style . 1>/dev/null
+
+load_coding_style
+
+if [ ! -f "$CODING_STYLE_LOG_FILE" ]; then
+	print_color "$COLOR_MAJOR" "Failed loading coding-style!"
+	exit $EXIT_USER_ERROR
+fi
+
 echo ""
 
 # ------------- intial error count ------------- :
-MAJOR_COUNT=$(cat "$STYLE_LOG" | grep -c "MAJOR")
-MINOR_COUNT=$(cat "$STYLE_LOG" | grep -c "MINOR")
-INFO_COUNT=$(cat "$STYLE_LOG" | grep -c "INFO")
+MAJOR_COUNT=$(count_errors "MAJOR")
+MINOR_COUNT=$(count_errors "MINOR")
+INFO_COUNT=$(count_errors "INFO")
 TOTAL_COUNT=$((MAJOR_COUNT + MINOR_COUNT + INFO_COUNT))
 
 # ------------------ message ------------------- :
 
 if [ "$TOTAL_COUNT" -eq 0 ]; then
-	echo "$(color-no-err "Your project is coding-style compliant!")"
-	rm -f $STYLE_LOG
-	exit
+	print_color "$COLOR_NO_ERR" "Your project is coding-style compliant!"
+	rm -f "$CODING_STYLE_LOG_FILE"
+	exit $EXIT_NO_ERRORS
 fi
 
-COUNT_MESSAGE="$(color-total "$TOTAL_COUNT coding style error(s)") - $(color-major "$MAJOR_COUNT major"), $(color-minor "$MINOR_COUNT minor"), $(color-info "$INFO_COUNT info")"
-MSG_CHAR_COUNT=$(($(echo $(strip-ansi "$COUNT_MESSAGE") | wc -c) - 1))
+COUNT_MESSAGE="$(print_color "$COLOR_TOTAL" "$TOTAL_COUNT coding style error(s)") - $(print_color "$COLOR_MAJOR" "$MAJOR_COUNT major"), $(print_color "$COLOR_MINOR" "$MINOR_COUNT minor"), $(print_color "$COLOR_INFO" "$INFO_COUNT info")"
+MSG_CHAR_COUNT="$(count_chars_ansiless "$COUNT_MESSAGE")"
 
 echo "$COUNT_MESSAGE"
-printf -- '-%.0s' $(seq 1 $MSG_CHAR_COUNT)  # n dashes ('-'), with n being the amount of characters in COUNT_MESSAGE
+printf -- '-%.0s' $(seq 1 "$MSG_CHAR_COUNT")  # n dashes ('-'), with n being the amount of characters in COUNT_MESSAGE
 echo ""
-cat $STYLE_LOG | sed "s/MAJOR/$(color-major "MAJOR")/" | sed "s/MINOR/$(color-minor "MINOR")/" | sed "s/INFO/$(color-info "INFO")/"
-rm -f $STYLE_LOG
+
+display_errors
+rm -f "$CODING_STYLE_LOG_FILE"
+
+exit $EXIT_ERRORS
