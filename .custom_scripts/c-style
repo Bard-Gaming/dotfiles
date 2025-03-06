@@ -26,7 +26,7 @@ strip-ansi() {
 get_project_name() {
 	# This function depends on a Makefile being present
 	# and the NAME variable being defined in it
-	grep -F "=" < Makefile | grep -F "NAME" | head -n1 | cut -d= -f2 | xargs
+	grep -F "=" < Makefile | grep -E "^ *NAME[ =]" | head -n1 | cut -d= -f2 | xargs
 }
 
 load_coding_style() {
