@@ -101,7 +101,7 @@ alias l='ls -CF'
 
 # Add an "alert" alias for long running commands.  Use like so:
 #   sleep 10; alert
-alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
+alias alert='notify-send --urgency=critical -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
 
 # Alias definitions.
 # You may want to put all your additions into a separate file like
@@ -167,14 +167,17 @@ PS1_USER="$COLOR_GREEN$USER_ICON\u$COLOR_RESET"
 PS1_WDIR="$COLOR_YELLOW$FOLDER_ICON\W$COLOR_RESET"
 PS1="$STYLE_BOLD$PS1_DATE $PS1_USER $PS1_WDIR$STYLE_RESET $ "
 
-# Enable custom scripts
-export PATH="$HOME/.custom_scripts:$PATH"
-
 # Emacs config
 export PATH="$HOME/.config/emacs/bin:$PATH"  # for "doom" cmd
 alias emacs="emacsclient -q -nw -a 'emacs-server'"
+
+# Enable custom scripts
+export PATH="$HOME/.custom_scripts:$PATH"
 
 # Prevent others changing aliases outside of config files
 # (has to happen at the end of .bashrc file)
 alias unalias="echo \"unalias: command not found\" && :"
 alias alias="echo \"alias: command not found\" && :"
+
+# Startup message
+fortune -s wisdom | cowsay -f dragon.cow

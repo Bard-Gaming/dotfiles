@@ -34,5 +34,6 @@ export bardedit="/home/chris/projects/epitech/personal/bardedit"
 export mysh="/home/chris/projects/epitech/personal/42sh"
 
 # ----------------- Ongoing Projects ---------------- :
-export my_sudo="$psu/my_sudo"
-export robot="$cpe/robot_factory"
+export trigo="$math/108trigo"
+export amazed="$cpe/amazed"
+export cuddle="/home/chris/projects/epitech/data_analysis/cuddle"
