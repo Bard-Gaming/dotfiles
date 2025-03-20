@@ -67,6 +67,27 @@ fi
 ##                                             ##
 #################################################
 
+display_help() {
+    cat <<EOF
+Usage: epitest [OPTIONS ...] <command> [<args> ...]
+
+Options:
+    -g, --graphical      Enable graphical mode (useful for CSFML projects)
+    -h, --help           Display this help message and exit
+    -i, --interactive    Switch to interactive mode
+    -u, --update         Update the docker image before running the command
+
+Notes:
+    Specifying either the -h, -i, or -u options (or their long equivalents)
+    makes specifying a command optional.
+
+Examples:
+    epitest ./a.out         # execute the a.out file
+    epitest -u ./a.out      # update the docker image and execute a.out
+    epitest -g ./my_hunter  # run a graphical application
+EOF
+}
+
 update() {
     # put info on stderr so not as to interfere with user output
     echo "epitest: Checking for updates..." >&2
@@ -83,9 +104,13 @@ update() {
 
         rm pull.log
     else
-        echo "epitest: Image not found locally. Pulling it for the first time..." >&2
-        $DOCKER_CMD pull "$IMAGE"
+        echo "epitest: Image not found locally. Pulling it for the first time... " >&2
+        $DOCKER_CMD pull "$IMAGE" >&2
     fi
+}
+
+is_relative_path() {
+    printf "%s" "$1" | grep -F "/"
 }
 
 
@@ -99,6 +124,7 @@ CMD=""
 DO_UPDATE=false
 REQUIRES_CMD=true
 INTERACTIVE=false
+GRAPHICAL=false
 
 
 if [[ -z "${@:1}" ]]; then
@@ -108,18 +134,22 @@ fi
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        -h | --help)
-            echo "$USAGE_MSG"
-            exit 0
-            ;;
-        -u | --update)
-            REQUIRES_CMD=false
-            DO_UPDATE=true
+        -g | --graphical)
+            GRAPHICAL=true
             shift
+            ;;
+        -h | --help)
+            display_help
+            exit 0
             ;;
         -i | --interactive)
             REQUIRES_CMD=false
             INTERACTIVE=true
+            shift
+            ;;
+        -u | --update)
+            REQUIRES_CMD=false
+            DO_UPDATE=true
             shift
             ;;
         -*)
@@ -155,8 +185,35 @@ fi
 
 #################################################
 ##                                             ##
+##                 Docker Setup                ##
+##                                             ##
+#################################################
+
+DOCKER_RUN_OPTS=("--rm" "-it" "-v" "$(pwd):/app" "-w" "/app")
+
+if [[ "$GRAPHICAL" = true ]]; then
+    printf "Setting up graphical env... " >&2
+    xhost +local:docker &>/dev/null
+    echo "Done!" >&2
+    DOCKER_RUN_OPTS+=("-e" "DISPLAY=$DISPLAY" "-v" "/tmp/.X11-unix:/tmp/.X11-unix:rw" "--net=host")
+fi
+
+#################################################
+##                                             ##
 ##                     Run                     ##
 ##                                             ##
 #################################################
 
-$DOCKER_CMD run --rm -it -v "$PWD":/app -w /app "$IMAGE" bash -c "$CMD"
+# Rebuild project in graphical mode to ensure support
+if [[ "$GRAPHICAL" = true ]] && is_relative_path $CMD && [[ -f "Makefile" ]]; then
+    printf "Rebuilding project in new env... " >&2
+
+    if ! $DOCKER_CMD run "${DOCKER_RUN_OPTS[@]}" "$IMAGE" bash -c "make re" &>/dev/null; then
+        echo "Failed (Is the 're' rule missing?)." >&2
+    else
+        echo "Done!" >&2
+    fi
+fi
+
+# Run the given command(s)
+$DOCKER_CMD run "${DOCKER_RUN_OPTS[@]}" "$IMAGE" bash -c "$CMD"
