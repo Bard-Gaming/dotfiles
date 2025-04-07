@@ -1,15 +1,19 @@
 #!/bin/bash
 
 
-# Constants:
-USER_DIR=$(pwd)
-CODING_STYLE_LOG_FILE="$USER_DIR/coding-style-reports.log"
+SCRIPT_NAME=$(basename "$0")
+PROJECT_DIR="."
+IGNORE_FILE=""
+REPORT_FILE="coding-style-reports.log"
 
-EXIT_NO_ERRORS=0
-EXIT_ERRORS=1
-EXIT_USER_ERROR=2
 
-# ------------- Colors -------------- :
+#########################################################
+##                                                     ##
+##                        Colors                       ##
+##                                                     ##
+#########################################################
+
+COLOR_FATAL=$'\033[1;38;5;207m'
 COLOR_MAJOR=$'\033[1;31m'
 COLOR_MINOR=$'\033[1;93m'
 COLOR_INFO=$'\033[1;37m'
@@ -17,87 +21,194 @@ COLOR_TOTAL=$'\033[1;97m'
 COLOR_NO_ERR=$'\033[1;32m'
 COLOR_RESET=$'\033[0m'
 
-strip-ansi() {
-	# Black magic sed to remove ansi escape sequences from a string
-	# (Copied over from a Stackoverflow post somewhere)
-	echo "$1" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g"
-}
 
-get_project_name() {
-	# This function depends on a Makefile being present
-	# and the NAME variable being defined in it
-	grep -F "=" < Makefile | grep -E "^ *NAME[ =]" | head -n1 | cut -d= -f2 | xargs
-}
+#########################################################
+##                                                     ##
+##                        Utils                        ##
+##                                                     ##
+#########################################################
 
-load_coding_style() {
-	docker run --rm --security-opt "label:disable" -i -v ".":"/mnt/delivery" -v ".":"/mnt/reports" ghcr.io/epitech/coding-style-checker:latest "/mnt/delivery" "/mnt/reports"
-}
+display_help() {
+   cat << EOF
 
-count_errors() {
-	grep -c "$1" < "$CODING_STYLE_LOG_FILE"
+Usage:
+    $SCRIPT_NAME [OPTION]... [DIRECTORY]
+
+List all coding style violations for a given project.
+
+Options:
+    -h, --help
+        display this help message and exit
+
+    -i, --ignore[=FILE]
+        ignore the files/directories specified in FILE (default: .gitignore)
+
+EOF
 }
 
 print_color() {
-	printf "%s%s%s\n" "$1" "$2" "$COLOR_RESET"
+    printf "%s%s%s\n" "$1" "$2" "$COLOR_RESET"
 }
 
-display_errors() {
-	sed "s/MAJOR/$(print_color "$COLOR_MAJOR" "MAJOR")/" < "$CODING_STYLE_LOG_FILE" | \
-	sed "s/MINOR/$(print_color "$COLOR_MINOR" "MINOR")/" | \
-	sed "s/INFO/$(print_color "$COLOR_INFO" "INFO")/"
+load_coding_style_checker() {
+    echo "Loading coding style..."
+
+    docker run --rm --security-opt "label:disable" -i -v "$1":"/mnt/delivery" -v "$1":"/mnt/reports" ghcr.io/epitech/coding-style-checker:latest "/mnt/delivery" "/mnt/reports" &>/dev/null
+
+    if [ ! -f "$PROJECT_DIR/$REPORT_FILE" ]; then
+        print_color "$COLOR_MAJOR" "Failed to load coding-style!"
+        exit 1
+    fi
+    
+    echo ""
 }
 
-count_chars_ansiless() {
-	local ANSILESS_MSG
+is_ignored_file() {
+    local FILE IGNORED_FILE
 
-	ANSILESS_MSG=$(strip-ansi "$1")
-	echo "${#ANSILESS_MSG}"
+    FILE="$(echo "$1" | xargs)"
+    while IFS= read -r LINE || [ "$LINE" ]; do
+        IGNORED_FILE="$(echo "$LINE" | xargs)"
+
+        if [ "$(realpath "$FILE")" = "$(realpath "$IGNORED_FILE")" ]; then
+            return 0;
+        fi
+    done < "$IGNORE_FILE"
+
+    return 1;
 }
 
-# ------------- clean up project --------------- :
-if [ -f "Makefile" ]; then
-	EXECUTABLE_NAME="$(get_project_name)"
-	if [ -f "$EXECUTABLE_NAME" ]; then
-		if make fclean 1>/dev/null 2>/dev/null; then
-			echo "Cleaned up project '$EXECUTABLE_NAME'!"
-		fi
-	fi
+ignore_files() {
+    local TMP_DIR
+
+    TMP_DIR="/tmp/cstyle"
+
+    rm -rf "$TMP_DIR"
+    mkdir "$TMP_DIR"
+
+    for FILE in "$PROJECT_DIR"/* "$PROJECT_DIR"/.*; do
+        if [ "$FILE" = "$REPORT_FILE" ] || is_ignored_file "$FILE"; then
+            continue
+        fi
+
+        cp -r "$FILE" "$TMP_DIR"
+    done
+
+    PROJECT_DIR="$TMP_DIR"
+}
+
+count_chars() {
+    local STRING_NO_ANSI NO_ANSI_SUBSTITUTE
+
+    NO_ANSI_SUBSTITUTE='s/\x1B\[([0-9]{1,3}(;[0-9]{1,3})*)?[m|K]//g'
+    STRING_NO_ANSI="$(echo "$1" | sed -r "$NO_ANSI_SUBSTITUTE")"
+    echo "${#STRING_NO_ANSI}"
+}
+
+display_report_header() {
+    local FILE FATAL_COUNT MAJOR_COUNT MINOR_COUNT INFO_COUNT TOTAL_COUNT
+
+    FILE="$1"
+
+    FATAL_COUNT="$(grep -c "FATAL" < "$FILE")"
+    MAJOR_COUNT="$(grep -c "MAJOR" < "$FILE")"
+    MINOR_COUNT="$(grep -c "MINOR" < "$FILE")"
+    INFO_COUNT="$(grep -c "INFO" < "$FILE")"
+    TOTAL_COUNT=$((FATAL_COUNT + MAJOR_COUNT + MINOR_COUNT + INFO_COUNT))
+
+    if [ "$TOTAL_COUNT" -eq 0 ]; then
+        print_color "$COLOR_NO_ERR" "Your project is coding-style compliant!"
+        return
+    fi
+
+    if [ "$FATAL_COUNT" -eq 0 ]; then
+        COUNT_MSG="$(print_color "$COLOR_TOTAL" "$TOTAL_COUNT coding style error(s)") - $(print_color "$COLOR_MAJOR" "$MAJOR_COUNT major"), $(print_color "$COLOR_MINOR" "$MINOR_COUNT minor"), $(print_color "$COLOR_INFO" "$INFO_COUNT info")"
+    else
+        COUNT_MSG="$(print_color "$COLOR_TOTAL" "$TOTAL_COUNT coding style error(s)") - $(print_color "$COLOR_FATAL" "$FATAL_COUNT fatal"), $(print_color "$COLOR_MAJOR" "$MAJOR_COUNT major"), $(print_color "$COLOR_MINOR" "$MINOR_COUNT minor"), $(print_color "$COLOR_INFO" "$INFO_COUNT info")"
+    fi
+
+    local MSG_LEN
+
+    MSG_LEN="$(count_chars "$COUNT_MSG")"
+    echo "$COUNT_MSG"
+    printf -- '-%.0s' $(seq 1 "$MSG_LEN")
+    echo ""
+}
+
+display_report() {
+    display_report_header "$1"
+
+    sed "s/FATAL/$(print_color "$COLOR_FATAL" "FATAL")/" < "$1" | \
+    sed "s/MAJOR/$(print_color "$COLOR_MAJOR" "MAJOR")/" | \
+    sed "s/MINOR/$(print_color "$COLOR_MINOR" "MINOR")/" | \
+    sed "s/INFO/$(print_color "$COLOR_INFO" "INFO")/"
+}
+
+#########################################################
+##                                                     ##
+##                       Parsing                       ##
+##                                                     ##
+#########################################################
+
+POSITIONAL_ARGS=0
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        -h | --help)
+            display_help
+            exit 0
+            ;;
+        -i | --ignore)
+            shift
+
+            if [ "$#" -gt 0 ] && [ "${1:1}" != "-" ]; then
+                IGNORE_FILE="$1"
+                shift
+            else
+                IGNORE_FILE=".gitignore"
+            fi
+
+            if ! [ -f "$IGNORE_FILE" ]; then
+                echo "$SCRIPT_NAME: error: couldn't find file \"$IGNORE_FILE\"" >&2
+                exit 1
+            fi
+            ;;
+        -*)
+            echo "$SCRIPT_NAME: error: invalid option \"$1\"" >&2
+            exit 2
+            ;;
+        *)
+            POSITIONAL_ARGS=$((POSITIONAL_ARGS + 1))
+
+            if [ "$POSITIONAL_ARGS" -gt 1 ]; then
+                echo "$SCRIPT_NAME: error: too many args" >&2
+                exit 2
+            fi
+
+            PROJECT_DIR="$1"
+            shift
+            ;;
+    esac
+done
+
+if ! [ -d "$PROJECT_DIR" ]; then
+    echo "$SCRIPT_NAME: error: \"$PROJECT_DIR\" is not a valid directory" >&2
+    exit 1
 fi
 
-# ------------ log file generation ------------- :
-echo "Loading coding-style..."
 
-load_coding_style
+#########################################################
+##                                                     ##
+##                   Program Runtime                   ##
+##                                                     ##
+#########################################################
 
-if [ ! -f "$CODING_STYLE_LOG_FILE" ]; then
-	print_color "$COLOR_MAJOR" "Failed loading coding-style!"
-	exit $EXIT_USER_ERROR
+if [ "$IGNORE_FILE" ]; then
+    ignore_files "$IGNORE_FILE"
 fi
 
-echo ""
+load_coding_style_checker "$PROJECT_DIR"
 
-# ------------- intial error count ------------- :
-MAJOR_COUNT=$(count_errors "MAJOR")
-MINOR_COUNT=$(count_errors "MINOR")
-INFO_COUNT=$(count_errors "INFO")
-TOTAL_COUNT=$((MAJOR_COUNT + MINOR_COUNT + INFO_COUNT))
+display_report "$PROJECT_DIR/$REPORT_FILE"
 
-# ------------------ message ------------------- :
-
-if [ "$TOTAL_COUNT" -eq 0 ]; then
-	print_color "$COLOR_NO_ERR" "Your project is coding-style compliant!"
-	rm -f "$CODING_STYLE_LOG_FILE"
-	exit $EXIT_NO_ERRORS
-fi
-
-COUNT_MESSAGE="$(print_color "$COLOR_TOTAL" "$TOTAL_COUNT coding style error(s)") - $(print_color "$COLOR_MAJOR" "$MAJOR_COUNT major"), $(print_color "$COLOR_MINOR" "$MINOR_COUNT minor"), $(print_color "$COLOR_INFO" "$INFO_COUNT info")"
-MSG_CHAR_COUNT="$(count_chars_ansiless "$COUNT_MESSAGE")"
-
-echo "$COUNT_MESSAGE"
-printf -- '-%.0s' $(seq 1 "$MSG_CHAR_COUNT")  # n dashes ('-'), with n being the amount of characters in COUNT_MESSAGE
-echo ""
-
-display_errors
-rm -f "$CODING_STYLE_LOG_FILE"
-
-exit $EXIT_ERRORS
+rm -f "$PROJECT_DIR/$REPORT_FILE"
