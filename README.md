@@ -11,6 +11,7 @@ some scripts aren't properly error-handled! The scripts that aren't
 entirely safe are the ones that aren't in the following 'safe' list:
 
 **List of 'safe' scripts:**
-- [function-check](https://github.com/Bard-Gaming/dotfiles/blob/main/.custom_scripts/function-check) 
 - [c-style](https://github.com/Bard-Gaming/dotfiles/blob/main/.custom_scripts/c-style)
+- [epitest](https://github.com/Bard-Gaming/dotfiles/blob/main/.custom_scripts/epitest)
+- [function-check](https://github.com/Bard-Gaming/dotfiles/blob/main/.custom_scripts/function-check)
 - [project-utils](https://github.com/Bard-Gaming/dotfiles/blob/main/.custom_scripts/project-utils)
