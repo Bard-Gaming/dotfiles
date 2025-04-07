@@ -11,23 +11,23 @@ SCRIPT_NAME=$(basename "$0")
 #########################################################
 
 display_help() {
-    cat <<-EOM
+    cat << EOF
 
 Usage:
- $SCRIPT_NAME [options] <binary> [binary, ...]
+    $SCRIPT_NAME [options] <binary> [binary, ...]
 
 Get a list of all GNU C Library functions used in given binary files.
 
 Options:
- -a, --almost-all      get all external functions.
- -A, --all             get all functions.
- -c, --columns         get the list in columns instead of rows.
- -d, --no-duplicates   if -H, only get unique function names, otherwise only unique binaries
- -F, --force-headers   force display of binary file names (for when there's only a single binary)
- -h, --help            display this message and exit.
- -H, --no-headers      don't display binary file names. (default if single binary is specified)
+    -a, --almost-all      get all external functions.
+    -A, --all             get all functions.
+    -c, --columns         get the list in columns instead of rows.
+    -d, --no-duplicates   if -H, only get unique function names, otherwise only unique binaries
+    -F, --force-headers   force display of binary file names (for when there's only a single binary)
+    -h, --help            display this message and exit.
+    -H, --no-headers      don't display binary file names. (default if single binary is specified)
 
-EOM
+EOF
 }
 
 get_detailed_function_list() {
