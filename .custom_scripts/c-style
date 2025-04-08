@@ -67,8 +67,14 @@ is_ignored_file() {
     local FILE IGNORED_FILE
 
     FILE="$(echo "$1" | xargs)"
+
     while IFS= read -r LINE || [ "$LINE" ]; do
-        IGNORED_FILE="$(echo "$LINE" | xargs)"
+        # Don't wrap LINE in comments to allow for globs
+        IGNORED_FILE="$(echo $LINE | cut -d'#' -f1 | xargs)"
+
+        if [ -z "$IGNORED_FILE" ]; then
+            continue
+        fi
 
         if [ "$(realpath "$FILE")" = "$(realpath "$IGNORED_FILE")" ]; then
             return 0;
