@@ -51,37 +51,81 @@ print_color() {
 }
 
 load_coding_style_checker() {
-    echo "Loading coding style..."
+    local CS_PATH
 
-    docker run --rm --security-opt "label:disable" -i -v "$1":"/mnt/delivery" -v "$1":"/mnt/reports" ghcr.io/epitech/coding-style-checker:latest "/mnt/delivery" "/mnt/reports" &>/dev/null
+    CS_PATH="$(realpath "$1")"
+
+    echo "Loading coding style... $CS_PATH"
+
+    docker run --rm --security-opt "label:disable" -i -v "$CS_PATH":"/mnt/delivery" -v "$CS_PATH":"/mnt/reports" ghcr.io/epitech/coding-style-checker:latest "/mnt/delivery" "/mnt/reports" &>/dev/null
 
     if [ ! -f "$PROJECT_DIR/$REPORT_FILE" ]; then
         print_color "$COLOR_MAJOR" "Failed to load coding-style!"
         exit 1
     fi
-    
+
     echo ""
 }
 
 is_ignored_file() {
-    local FILE IGNORED_FILE
+    local FILE IGNORED_FILES PARENT_DIR
 
-    FILE="$(echo "$1" | xargs)"
+    FILE="$(basename "$1" | xargs)"
+    PARENT_DIR="$(dirname "$1")"
+
+    if [ "$FILE" = "$REPORT_FILE" ] || [ "$FILE" = "." ] || [ "$FILE" = ".." ] || [ "$FILE" = ".git" ] || [ "$FILE" = ".cache" ]; then
+        return 0
+    fi
 
     while IFS= read -r LINE || [ "$LINE" ]; do
-        # Don't wrap LINE in comments to allow for globs
-        IGNORED_FILE="$(echo $LINE | cut -d'#' -f1 | xargs)"
+        IGNORED_FILES="$(cut -d'#' -f1 <<< "$LINE" | xargs)"  # remove comments
 
-        if [ -z "$IGNORED_FILE" ]; then
-            continue
-        fi
+        for IGNORED_FILE in "$PARENT_DIR/"$IGNORED_FILES; do
+            if [ -z "$IGNORED_FILE" ]; then
+                continue
+            fi
 
-        if [ "$(realpath "$FILE")" = "$(realpath "$IGNORED_FILE")" ]; then
-            return 0;
-        fi
+            if [ "$(realpath "$PARENT_DIR/$FILE")" = "$(realpath "$IGNORED_FILE")" ]; then
+                return 0;
+            fi
+        done
+
     done < "$IGNORE_FILE"
 
     return 1;
+}
+
+copy_files_to_dir() {
+    local OUTPUT_DIR SRC_DIR FILE_ABS
+
+    OUTPUT_DIR="$1"
+    SRC_DIR="$2"
+
+    for FILE in "$SRC_DIR"/* "$SRC_DIR"/.*; do
+        if [ "$(basename "$FILE")" = "*" ] || [ "$(basename "$FILE")" = ".*" ]; then
+            continue
+        fi
+
+        FILE="$(basename "$FILE")"
+        FILE_ABS="$(realpath "$SRC_DIR/$FILE")"
+
+        if is_ignored_file "$FILE_ABS"; then
+            continue
+        fi
+
+        if [ -d "$FILE_ABS" ]; then
+            local NEW_OUTPUT_DIR
+
+            NEW_OUTPUT_DIR="$(realpath "$OUTPUT_DIR/$FILE")"
+            mkdir "$NEW_OUTPUT_DIR"
+
+            copy_files_to_dir "$NEW_OUTPUT_DIR" "$SRC_DIR/$FILE"
+
+            continue
+        fi
+
+        cp "$FILE_ABS" "$OUTPUT_DIR"
+    done
 }
 
 ignore_files() {
@@ -92,13 +136,7 @@ ignore_files() {
     rm -rf "$TMP_DIR"
     mkdir "$TMP_DIR"
 
-    for FILE in "$PROJECT_DIR"/* "$PROJECT_DIR"/.*; do
-        if [ "$FILE" = "$REPORT_FILE" ] || is_ignored_file "$FILE"; then
-            continue
-        fi
-
-        cp -r "$FILE" "$TMP_DIR"
-    done
+    copy_files_to_dir "$TMP_DIR" "$PROJECT_DIR"
 
     PROJECT_DIR="$TMP_DIR"
 }
@@ -149,6 +187,7 @@ display_report() {
     sed "s/MINOR/$(print_color "$COLOR_MINOR" "MINOR")/" | \
     sed "s/INFO/$(print_color "$COLOR_INFO" "INFO")/"
 }
+
 
 #########################################################
 ##                                                     ##
