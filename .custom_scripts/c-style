@@ -62,28 +62,31 @@ print_color() {
 update_coding_style_checker() {
     local GHCR_REGISTRY_TOKEN GHCR_REPOSITORY_STATUS
 
+    printf "Updating coding style checker..." >&2
+
     GHCR_REGISTRY_TOKEN=$(curl -s "https://ghcr.io/token?service=ghcr.io&scope=repository:epitech/coding-style-checker:pull" | grep -o '"token":"[^"]*' | grep -o '[^"]*$')
     GHCR_REPOSITORY_STATUS=$(curl -I -f -s -o /dev/null -H "Authorization: Bearer $GHCR_REGISTRY_TOKEN" "https://ghcr.io/v2/epitech/coding-style-checker/manifests/latest" && echo 0 || echo 1)
 
     if [ "$GHCR_REPOSITORY_STATUS" -eq 0 ]; then
-        echo "Downloading new image and cleaning old one..." >&2
-        docker pull ghcr.io/epitech/coding-style-checker:latest || (echo "Download ERROR" >&2; return 1)
-        docker image prune -f || (echo "Download ERROR" >&2; return 1)
-        echo "Download OK" >&2
+        docker pull ghcr.io/epitech/coding-style-checker:latest &>/dev/null || (echo " Download Error." >&2; return 1)
+        docker image prune -f &>/dev/null || (echo " Prune Error." >&2; return 1)
     else
-        echo "WARNING: Skipping image download" >&2
+        echo " Connection Refused. Are you connected to the internet?" >&2
+        return 1
     fi
+
+    echo " Done!" >&2
 }
 
 load_coding_style_checker() {
     local CS_PATH
     CS_PATH="$(realpath "$1")"
 
-    printf "Loading coding style in %s..." "$(basename "$CS_PATH")" >&2
+    printf "Loading coding style checker..." >&2
 
     docker run --rm --security-opt "label:disable" -i -v "$CS_PATH":"/mnt/delivery" -v "$CS_PATH":"/mnt/reports" ghcr.io/epitech/coding-style-checker:latest "/mnt/delivery" "/mnt/reports" &>/dev/null
 
-    if [ ! -f "$PROJECT_DIR/$REPORT_FILE" ]; then
+    if [ ! -f "$CS_PATH/$REPORT_FILE" ]; then
         echo " Error!" >&2
         echo  # add newline in stdout (not stderr)
         print_color "$COLOR_MAJOR" "Failed to load coding-style!"
@@ -243,7 +246,7 @@ while [ "$#" -gt 0 ]; do
         -c | --clean)
             shift
 
-            if [ "$#" -gt 0 ] && [ "${1:1}" != "-" ]; then
+            if [ "$#" -gt 0 ] && [ "${1:0:1}" != "-" ]; then
                 CLEAN_RULE="$1"
                 shift
             else
@@ -257,7 +260,7 @@ while [ "$#" -gt 0 ]; do
         -i | --ignore)
             shift
 
-            if [ "$#" -gt 0 ] && [ "${1:1}" != "-" ]; then
+            if [ "$#" -gt 0 ] && [ "${1:0:1}" != "-" ]; then
                 IGNORE_FILE="$1"
                 shift
             else
