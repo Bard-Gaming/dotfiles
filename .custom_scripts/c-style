@@ -4,6 +4,7 @@
 SCRIPT_NAME=$(basename "$0")
 PROJECT_DIR="."
 IGNORE_FILE=""
+CLEAN_RULE=""
 REPORT_FILE="coding-style-reports.log"
 UPDATE_CODING_STYLE="no"  # set to "yes" to always try to update
 
@@ -38,6 +39,10 @@ Usage:
 List all coding style violations for a given project.
 
 Options:
+    -c, --clean[=RULE]
+        clean up the project before running the checker,
+        using the specified rule with GNU Make (default: fclean)
+
     -h, --help
         display this help message and exit
 
@@ -72,19 +77,32 @@ update_coding_style_checker() {
 
 load_coding_style_checker() {
     local CS_PATH
-
     CS_PATH="$(realpath "$1")"
 
-    echo "Loading coding style in $(basename "$CS_PATH")..."
+    printf "Loading coding style in %s..." "$(basename "$CS_PATH")" >&2
 
     docker run --rm --security-opt "label:disable" -i -v "$CS_PATH":"/mnt/delivery" -v "$CS_PATH":"/mnt/reports" ghcr.io/epitech/coding-style-checker:latest "/mnt/delivery" "/mnt/reports" &>/dev/null
 
     if [ ! -f "$PROJECT_DIR/$REPORT_FILE" ]; then
+        echo " Error!" >&2
+        echo  # add newline in stdout (not stderr)
         print_color "$COLOR_MAJOR" "Failed to load coding-style!"
         exit 1
     fi
 
-    echo ""
+    echo " Done!" >&2
+    echo  # add newline in stdout (not stderr)
+}
+
+make_clean_rule() {
+    printf "Running make %s..." "$CLEAN_RULE" >&2
+
+    if ! make -C "$PROJECT_DIR" "$CLEAN_RULE" &>/dev/null; then
+        echo " Error!" >&2
+        exit 1
+    fi
+
+    echo " Done!" >&2
 }
 
 is_ignored_file() {
@@ -149,8 +167,9 @@ copy_files_to_dir() {
 }
 
 ignore_files() {
-    local TMP_DIR
+    printf "Ignoring files in %s..." "$IGNORE_FILE" >&2
 
+    local TMP_DIR
     TMP_DIR="/tmp/cstyle"
 
     rm -rf "$TMP_DIR"
@@ -159,6 +178,8 @@ ignore_files() {
     copy_files_to_dir "$TMP_DIR" "$PROJECT_DIR"
 
     PROJECT_DIR="$TMP_DIR"
+
+    echo " Done!" >&2
 }
 
 count_chars() {
@@ -219,6 +240,16 @@ POSITIONAL_ARGS=0
 
 while [ "$#" -gt 0 ]; do
     case "$1" in
+        -c | --clean)
+            shift
+
+            if [ "$#" -gt 0 ] && [ "${1:1}" != "-" ]; then
+                CLEAN_RULE="$1"
+                shift
+            else
+                CLEAN_RULE="fclean"
+            fi
+            ;;
         -h | --help)
             display_help
             exit 0
@@ -274,6 +305,10 @@ fi
 
 if [ "$UPDATE_CODING_STYLE" = "yes" ]; then
     update_coding_style_checker
+fi
+
+if [ "$CLEAN_RULE" ]; then
+    make_clean_rule
 fi
 
 if [ "$IGNORE_FILE" ]; then
