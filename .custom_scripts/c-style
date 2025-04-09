@@ -5,6 +5,7 @@ SCRIPT_NAME=$(basename "$0")
 PROJECT_DIR="."
 IGNORE_FILE=""
 REPORT_FILE="coding-style-reports.log"
+UPDATE_CODING_STYLE="no"  # set to "yes" to always try to update
 
 
 #########################################################
@@ -43,6 +44,9 @@ Options:
     -i, --ignore[=FILE]
         ignore the files/directories specified in FILE (default: .gitignore)
 
+    -u, --update
+        updates the coding style checker
+
 EOF
 }
 
@@ -50,12 +54,28 @@ print_color() {
     printf "%s%s%s\n" "$1" "$2" "$COLOR_RESET"
 }
 
+update_coding_style_checker() {
+    local GHCR_REGISTRY_TOKEN GHCR_REPOSITORY_STATUS
+
+    GHCR_REGISTRY_TOKEN=$(curl -s "https://ghcr.io/token?service=ghcr.io&scope=repository:epitech/coding-style-checker:pull" | grep -o '"token":"[^"]*' | grep -o '[^"]*$')
+    GHCR_REPOSITORY_STATUS=$(curl -I -f -s -o /dev/null -H "Authorization: Bearer $GHCR_REGISTRY_TOKEN" "https://ghcr.io/v2/epitech/coding-style-checker/manifests/latest" && echo 0 || echo 1)
+
+    if [ "$GHCR_REPOSITORY_STATUS" -eq 0 ]; then
+        echo "Downloading new image and cleaning old one..." >&2
+        docker pull ghcr.io/epitech/coding-style-checker:latest || (echo "Download ERROR" >&2; return 1)
+        docker image prune -f || (echo "Download ERROR" >&2; return 1)
+        echo "Download OK" >&2
+    else
+        echo "WARNING: Skipping image download" >&2
+    fi
+}
+
 load_coding_style_checker() {
     local CS_PATH
 
     CS_PATH="$(realpath "$1")"
 
-    echo "Loading coding style... $CS_PATH"
+    echo "Loading coding style in $(basename "$CS_PATH")..."
 
     docker run --rm --security-opt "label:disable" -i -v "$CS_PATH":"/mnt/delivery" -v "$CS_PATH":"/mnt/reports" ghcr.io/epitech/coding-style-checker:latest "/mnt/delivery" "/mnt/reports" &>/dev/null
 
@@ -218,6 +238,10 @@ while [ "$#" -gt 0 ]; do
                 exit 1
             fi
             ;;
+        -u | --update)
+            UPDATE_CODING_STYLE="yes"
+            shift
+           ;;
         -*)
             echo "$SCRIPT_NAME: error: invalid option \"$1\"" >&2
             exit 2
@@ -247,6 +271,10 @@ fi
 ##                   Program Runtime                   ##
 ##                                                     ##
 #########################################################
+
+if [ "$UPDATE_CODING_STYLE" = "yes" ]; then
+    update_coding_style_checker
+fi
 
 if [ "$IGNORE_FILE" ]; then
     ignore_files "$IGNORE_FILE"
