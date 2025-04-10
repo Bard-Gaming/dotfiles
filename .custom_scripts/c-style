@@ -2,6 +2,8 @@
 
 
 SCRIPT_NAME=$(basename "$0")
+VERSION="1.3.0"
+
 PROJECT_DIR="."
 IGNORE_FILE=""
 CLEAN_RULE=""
@@ -52,6 +54,26 @@ Options:
     -u, --update
         updates the coding style checker
 
+    -v, --version
+        display the version and exit
+
+Examples:
+    c-style -c -i -u 2>/dev/null  # run with all default options but without logs
+    c-style -i ignored_files  # ignore all files specified in ignored_files
+
+EOF
+}
+
+display_version() {
+    cat << EOF
+c-style (C Coding-Style Checker) $VERSION
+Copyright (C) 2025 EPITECH Strasbourg
+License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>.
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+
+Written by Christophe Dronne :> see
+<https://github.com/Bard-Gaming>
 EOF
 }
 
@@ -276,6 +298,10 @@ while [ "$#" -gt 0 ]; do
             UPDATE_CODING_STYLE="yes"
             shift
            ;;
+        -v | --version)
+            display_version
+            exit 0
+            ;;
         -*)
             echo "$SCRIPT_NAME: error: invalid option \"$1\"" >&2
             exit 2
